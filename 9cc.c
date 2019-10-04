@@ -108,7 +108,7 @@ Token *tokenize(){
 			continue;
 		}
 
-		if(*p == '+' || *p == '-') {
+		if(strchr("+-()*/", *p)) {
 			cur = new_token(TK_RESERVED, cur, p++);
 			continue;
 		}
@@ -119,7 +119,7 @@ Token *tokenize(){
 			continue;
 		}
 
-		error_at(token->str, "トークナイズ出来ません");
+		error_at(token->str, "invalid token");
 	}
 
 	new_token(TK_EOF, cur, p);
@@ -159,6 +159,11 @@ Node *new_node_num(int val) {
 	node->val = val;
 	return node;
 }
+
+
+Node *expr();
+Node *mul();
+Node *primary();
 
 Node *expr() {
 	Node *node = mul();
@@ -246,28 +251,20 @@ int main(int argc, char **argv){
 	//トークナイズする
 	token = tokenize();
 
+	//パースする
+	Node *node = expr();
+
 	//アセンブリの前半を出力
 	printf(".intel_syntax noprefix\n");
 	printf(".global main\n");
 	printf("main:\n");
 
-	//式の最初が数値かどうかの確認
-	//mov命令出力
-	printf("    mov rax, %d\n", expect_number());
+	//抽象構文木からアセンブリ出力
+	gen(node);
 
-	// +数値 -数値というトークンの並びを消費して
-	//アセンブリ出力
-	while (!at_eof())
-	{
-		if(consume('+')) {
-			printf("    add rax, %d\n", expect_number());
-			continue;
-		}
-
-		expect('-');
-		printf("    sub rax, %d\n", expect_number());
-	}
-
+	//スタックトップには計算結果があるはずなので
+	//RAXにロードする
+	printf("	pop rax\n");
 	printf("    ret\n");
 	return 0;
 	
