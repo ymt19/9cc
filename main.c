@@ -13,7 +13,7 @@ int main(int argc, char **argv){
 	token = tokenize();
 
 	//パースする
-	Node *node = expr();
+	program();
 
 	//アセンブリの前半を出力
 	printf(".intel_syntax noprefix\n");
@@ -36,7 +36,7 @@ int main(int argc, char **argv){
     }
 
 	//エピローグ
-    //最後の指揮の結果がRAXに残っているので、それが返り値
+    //最後の式の結果がRAXに残っているので、それが返り値
     printf("    mov rsp, rbp\n");
 	printf("	pop rbp\n");
 	printf("    ret\n");

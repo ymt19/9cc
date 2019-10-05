@@ -62,7 +62,7 @@ struct Node {
 };
 
 Token *tokenize();
-Node *expr();
+void program();
 
 // セミコロンで区切った複数の式のパースの結果
 Node *code[100];

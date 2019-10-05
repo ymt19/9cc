@@ -110,7 +110,7 @@ Token *tokenize(){
 				continue;
 			}
 		
-		if (strchr("+-*/()<>;", *p)) {
+		if (strchr("+-*/()<>=;", *p)) {
 			cur = new_token(TK_RESERVED, cur, p++, 1);
 			continue;
 		}
@@ -166,7 +166,7 @@ Node *umary();
 Node *primary();
 
 // program = stmt*
-void *program() {
+void program() {
     int i = 0;
     while (!at_eof()) {
         code[i] = stmt();
@@ -178,9 +178,8 @@ void *program() {
 // stmt = expr ";"
 Node *stmt() {
     Node *node = expr();
-    if(consume(";")) {
-        return node;
-    }
+    expect(";");
+    return node;
 }
 
 //expr = assign
@@ -188,10 +187,12 @@ Node *expr() {
 	return assign();
 }
 
-// assign = equality
+// assign = equality ("=" assign)?
 Node *assign() {
     Node *node = equality();
-    expect(";");
+    if(consume("=")) {
+        node = new_node(ND_ASSIGN, node, assign());
+    }
     return node;
 }
 
@@ -290,6 +291,7 @@ Node *primary() {
         node->kind = ND_LVAR;
         // 1変数8バイト
         node->offset = (tok->str[0] - 'a' + 1) * 8;
+        return node;
     }
 
 	//ND_NUMのとき
