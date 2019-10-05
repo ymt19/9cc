@@ -54,7 +54,7 @@ void expect(char *op) {
 	if (token->kind != TK_RESERVED ||
 		strlen(op) != token->len ||
 		memcmp(token->str, op, token->len))
-		error_at(token->str, "'%c'ではありません", op);
+		error_at(token->str, "'%c'ではありません", *op);
 	token = token->next;
 }
 
@@ -110,7 +110,7 @@ Token *tokenize(){
 				continue;
 			}
 		
-		if (strchr("+-*/()<>", *p)) {
+		if (strchr("+-*/()<>;", *p)) {
 			cur = new_token(TK_RESERVED, cur, p++, 1);
 			continue;
 		}
