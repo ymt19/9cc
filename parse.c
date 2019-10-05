@@ -36,6 +36,18 @@ bool consume(char *op) {
 	return true;
 }
 
+// つぎのトークンがNK_IDENTのとき、トークンを１つ読み進めて
+// そのトークンを返す。それ以外はNULLを返す
+Token *consume_ident() {
+    if (token->kind != TK_IDENT)
+        return NULL;
+    
+    // 返り値となるNK_IDENTのトークン
+    Token *token_ident = token;
+    token = token->next;
+    return token_ident;
+}
+
 //つぎのトークンが期待している記号のときは、トークンを１つ読み進める
 //それ以外の場合にはエラーを報告
 void expect(char *op) {
@@ -99,8 +111,7 @@ Token *tokenize(){
 			}
 		
 		if (strchr("+-*/()<>", *p)) {
-			cur = new_token(TK_RESERVED, cur, p, 1);
-			p++;
+			cur = new_token(TK_RESERVED, cur, p++, 1);
 			continue;
 		}
 
@@ -113,6 +124,12 @@ Token *tokenize(){
 			cur->len = p - q;
 			continue;
 		}
+
+        // TK_IDENT型トークンの場合
+        if('a' <= *p && *p <= 'z') {
+            cur = new_token(TK_IDENT, cur, p++, 1);
+            continue;
+        }
 
 		error_at(token->str, "invalid token");
 	}
@@ -138,7 +155,9 @@ Node *new_node_num(int val) {
 }
 
 
+Node *stmt();
 Node *expr();
+Node *assign();
 Node *equality();
 Node *relational();
 Node *add();
@@ -146,9 +165,34 @@ Node *mul();
 Node *umary();
 Node *primary();
 
-//expr       = equality
+// program = stmt*
+void *program() {
+    int i = 0;
+    while (!at_eof()) {
+        code[i] = stmt();
+        i++;
+    }
+    code[i] = NULL;
+}
+
+// stmt = expr ";"
+Node *stmt() {
+    Node *node = expr();
+    if(consume(";")) {
+        return node;
+    }
+}
+
+//expr = assign
 Node *expr() {
-	return equality();
+	return assign();
+}
+
+// assign = equality
+Node *assign() {
+    Node *node = equality();
+    expect(";");
+    return node;
 }
 
 //equality   = relational ("==" relational | "!=" relational)*
@@ -230,7 +274,7 @@ Node *umary() {
 	return primary();
 }
 
-//primary = num | "(" expr ")"
+//primary = num | ident | "(" expr ")"
 Node *primary() {
 	//次のトークンが'('なら、'(' expr ')' のはず
 	if(consume("(")) {
@@ -239,6 +283,15 @@ Node *primary() {
 		return node;
 	}
 
-	//そうでなければ数値
+    //ND_LVARのとき
+    Token *tok = consume_ident();
+    if(tok) {
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_LVAR;
+        // 1変数8バイト
+        node->offset = (tok->str[0] - 'a' + 1) * 8;
+    }
+
+	//ND_NUMのとき
 	return new_node_num(expect_number());
 }
