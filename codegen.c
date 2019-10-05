@@ -1,19 +1,43 @@
 #include "9cc.h"
 
+// nodeが変数を指していたら、その変数のアドレスを
+// 計算して、スタックにpush
+void gen_lval(Node *node) {
+    if (node->kind != ND_LVAR)
+        error("代入の左辺値が変数ではありません");
+    
+    printf("    mov rax, rbp\n");
+    printf("    sub rax, %d\n", node->offset);
+    printf("    push rax\n");   // アドレスraxをpush
+}
+
 void gen(Node *node) {
-	if (node->kind == ND_NUM) {
-		printf("    push %d\n", node->val);
-		return;
-	}
+    switch (node->kind) {
+    case ND_NUM:
+        printf("    push %d\n", node->val);
+        return;
+    case ND_LVAR:
+        gen_lval(node);
+        printf("    pop rax\n");        //raxはアドレス
+        printf("    mov rax, [rax]\n"); //raxは値となる
+        printf("    push rax\n");
+        return;
+    case ND_ASSIGN:
+        gen_lval(node->lhs);            // 左辺のアドレスを得る
+        gen(node->rhs);
 
-	gen(node->lhs);
-	gen(node->rhs);
+        printf("    pop rdi\n");
+        printf("    pop rax\n");
+        printf("    mov [rax], rdi\n");
+    }
 
-	printf("	pop rdi\n");
-	printf("	pop rax\n");
+    gen(node->lhs);
+    gen(node->rhs);
 
-	switch (node->kind)
-	{
+    printf("    pop rdi\n");
+    printf("    pop rax\n");
+
+	switch (node->kind) {
 	case ND_ADD:
 		printf("	add rax, rdi\n");
 		break;
@@ -27,6 +51,7 @@ void gen(Node *node) {
 		printf("	cqo\n");
 		printf("	idiv rdi\n");
 		break;
+    /*
 	case ND_EQ:
 		printf("	cmp rax, rdi\n");
 		printf("	sete al\n");
@@ -47,6 +72,7 @@ void gen(Node *node) {
 		printf("	setle al\n");
 		printf("	movzb rax, al\n");
 		break;
+    */
 	}
 
 	printf("	push rax\n");

@@ -9,6 +9,7 @@ int main(int argc, char **argv){
 	user_input = argv[1];
 
 	//トークナイズする
+    //結果はcodeに保存される
 	token = tokenize();
 
 	//パースする
@@ -19,12 +20,25 @@ int main(int argc, char **argv){
 	printf(".global main\n");
 	printf("main:\n");
 
-	//抽象構文木からアセンブリ出力
-	gen(node);
+    //プロローグ
+    //変数26個分の領域を確保する
+    printf("    push rbp\n");
+    printf("    mov rbp, rsp\n");
+    printf("    sub rsp, 208\n");   // rsp <--26*8bite--> rbp
 
-	//スタックトップには計算結果があるはずなので
-	//RAXにロードする
-	printf("	pop rax\n");
+	//先頭の式からコード生成
+    for (int i = 0; code[i]; i++) {
+        gen(code[i]);
+
+        //式の結果がスタックに残っているはずなので、
+        //スタックが溢れないようポップする
+        printf("    pop rax\n");
+    }
+
+	//エピローグ
+    //最後の指揮の結果がRAXに残っているので、それが返り値
+    printf("    mov rsp, rbp\n");
+	printf("	pop rbp\n");
 	printf("    ret\n");
 	return 0;
 }

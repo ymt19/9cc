@@ -9,6 +9,8 @@
 // parse.c
 //
 
+void error(char *fmt, ...);
+
 // トークンの種類
 typedef enum {
 	TK_RESERVED, // 記号
