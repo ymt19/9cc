@@ -6,10 +6,8 @@
 #include<string.h>
 
 //
-// parse.c
+// tokenize.c
 //
-
-void error(char *fmt, ...);
 
 // トークンの種類
 typedef enum {
@@ -21,8 +19,7 @@ typedef enum {
 
 //トークン型
 typedef struct Token Token;
-struct Token
-{
+struct Token {
 	TokenKind kind; // トークンの型
 	Token *next;    // 次の入力トークン
 	int val;        //kindがTK_NUMの場合、その数値
@@ -33,8 +30,24 @@ struct Token
 // 現在着目しているトークン
 Token *token;
 
+void error(char *fmt, ...);
+void error_at(char *loc, char *fmt, ...);
+bool consume(char *op);
+Token *consume_ident();
+void expect(char *op);
+int expect_number();
+bool at_eof();
+
 // 入力プログラム
 char *user_input;
+
+Token *tokenize();
+
+
+
+//
+// parse.c
+//
 
 //抽象構文木のノードの種類
 typedef enum {
@@ -51,25 +64,38 @@ typedef enum {
 	ND_NUM,     // 整数
 } NodeKind;
 
+//ローカル変数の型
+typedef struct LVar LVar;
+struct LVar {
+    LVar *next; // 次の変数
+    char *name; // 変数名
+    int offset; // RBP(ベースレジスタ)からのオフセット
+};
+
 // 抽象構文木のノードの型
 typedef struct Node Node;
 struct Node {
 	NodeKind kind;  //ノードの型
+	Node *next; 	//次のノード
 	Node *lhs;      //左辺 left hand side
 	Node *rhs;      //右辺 right hand side
 	int val;        //kindがND_NUMの場合のみ
-    int offset;     //kindがND_LVARの場合のみ
+	LVar *lvar;		//kindがND_LVARの場合のみ
 };
 
-Token *tokenize();
-void program();
+typedef struct Function Function;
+struct Function {
+	Node *node;
+	LVar *locals;
+	int stack_size;
+};
 
-// セミコロンで区切った複数の式のパースの結果
-Node *code[100];
+Function *program();
+
 
 
 //
 // codegen.c
 //
 
-void gen(Node *node);
+void codegen();
