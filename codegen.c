@@ -1,5 +1,7 @@
 #include "9cc.h"
 
+int label_count = 0;
+
 // 変数分のアドレスをスタックにpushする
 void gen_lvar(Node *node) {
     if (node->kind == ND_LVAR) {
@@ -47,7 +49,29 @@ void gen(Node *node) {
 		printf("	pop rbp\n");
 		printf("	ret\n");
 		return;
-    }
+	case ND_IF: {		//変数宣言を内包する
+		int cnt = label_count++;
+		if(node->els) {
+			gen(node->cond_expr);
+			printf("	pop rax\n");
+			printf("	cmp rax, 0\n");
+			printf("	je  .L.else%d\n", cnt);
+			gen(node->then);
+			printf("	jmp .L.end%d\n", cnt);
+			printf(".L.else%d:\n", cnt);
+			gen(node->els);
+			printf(".L.end%d:\n", cnt);
+		} else {
+			gen(node->cond_expr);
+			printf("	pop rax\n");
+			printf("	cmp rax, 0\n");
+			printf("	je  .L.end%d\n", cnt);
+			gen(node->then);
+			printf(".L.else%d:\n", cnt);
+		}
+		return;
+	}
+	}
 
     gen(node->lhs);
     gen(node->rhs);

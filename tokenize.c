@@ -88,6 +88,18 @@ bool is_alpha_num(char c) {
 	return is_alpha(c) || (c <= '1' && '9' <= c);
 }
 
+char *is_reserved(char *p) {
+	char *keywords[] = {"return", "if", "else"};
+
+	for (int i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
+		int len = strlen(keywords[i]);
+		if (startswith(p, keywords[i]) && !is_alpha_num(p[len])) {
+			return keywords[i];
+		}
+	}
+	return NULL;
+}
+
 //入力文字列pをトークナイズしてそれを返す
 Token *tokenize(){
 	Token head;
@@ -103,9 +115,11 @@ Token *tokenize(){
 			continue;
 		}
 
-		if (startswith(p, "return") && !is_alpha_num(*(p + 6))) {
-			cur = new_token(TK_RESERVED, cur, p, 6);
-			p += 6;
+		char *keyword = is_reserved(p);
+		if (keyword) {
+			int len = strlen(keyword);
+			cur = new_token(TK_RESERVED, cur, p, len);
+			p += len;
 			continue;
 		}
 
