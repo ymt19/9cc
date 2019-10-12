@@ -87,13 +87,6 @@ Function *program() {
 Node *stmt() {
 	Node *node;
 
-	if(consume("return")) {
-		node = new_node(ND_RETURN);
-		node->lhs = expr();
-		expect(";");
-		return node;
-	}
-
 	if(consume("if")) {
 		node = new_node(ND_IF);
 		expect("(");
@@ -103,6 +96,22 @@ Node *stmt() {
 		if(consume("else")) {
 			node->els = stmt();
 		}
+		return node;
+	}
+
+	if(consume("while")) {
+		node = new_node(ND_WHILE);
+		expect("(");
+		node->cond_expr = expr();
+		expect(")");
+		node->then = stmt();
+		return node;
+	}
+
+	if(consume("return")) {
+		node = new_node(ND_RETURN);
+		node->lhs = expr();
+		expect(";");
 		return node;
 	}
 

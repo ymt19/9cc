@@ -49,7 +49,7 @@ void gen(Node *node) {
 		printf("	pop rbp\n");
 		printf("	ret\n");
 		return;
-	case ND_IF: {		//変数宣言を内包する
+	case ND_IF: {
 		int cnt = label_count++;
 		if(node->els) {
 			gen(node->cond_expr);
@@ -71,6 +71,18 @@ void gen(Node *node) {
 		}
 		return;
 	}
+	case ND_WHILE: {
+		int cnt = label_count++;
+		printf(".Lbegin%d:\n", cnt);
+		gen(node->cond_expr);
+		printf("	pop rax\n");
+		printf("	cmp rax, 0\n");
+		printf("	je  .Lend%d\n", cnt);
+		gen(node->then);
+		printf("	jmp	.Lbegin%d\n", cnt);
+		printf(".Lend%d:\n", cnt);
+		return;
+	}		
 	}
 
     gen(node->lhs);
