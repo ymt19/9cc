@@ -65,6 +65,7 @@ typedef enum {
 	ND_RETURN,	// return
 	ND_IF,		// if
 	ND_WHILE,	// while
+	ND_FOR,		// for
 } NodeKind;
 
 //ローカル変数の型
@@ -85,10 +86,12 @@ struct Node {
 	int val;        //kindがND_NUMの場合のみ
 	LVar *lvar;		//kindがND_LVARの場合のみ
 
-	// if文かwhile文のみ
+	// if文かwhile文かfor文のみ
 	Node *cond_expr;
 	Node *then;
 	Node *els;
+	Node *init;
+	Node *re_init;
 };
 
 typedef struct Function Function;

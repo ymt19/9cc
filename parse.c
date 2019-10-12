@@ -108,6 +108,25 @@ Node *stmt() {
 		return node;
 	}
 
+	if(consume("for")) {
+		node = new_node(ND_FOR);
+		expect("(");
+		if(!consume(";")) {
+			node->init = expr();
+			expect(";");
+		}
+		if(!consume(";")) {
+			node->cond_expr = expr();
+			expect(";");
+		}
+		if(!consume(")")) {
+			node->re_init = expr();
+			expect(")");
+		}
+		node->then = stmt();
+		return node;
+	}
+
 	if(consume("return")) {
 		node = new_node(ND_RETURN);
 		node->lhs = expr();

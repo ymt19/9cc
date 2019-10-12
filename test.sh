@@ -30,5 +30,5 @@ try 1 "1 == 1"
 try 0 "1 != 1"
 try 5 "ab = 1; de = 2 + 3; if(ab > de)return ab; else return de;"
 try 11 "ab = 1; while(ab <= 10) ab = ab + 1; return ab;"
-
+try 45 "i=0; j=0; for(i = 0; i < 10; i = i + 1) j = j + i; return j;"
 echo OK

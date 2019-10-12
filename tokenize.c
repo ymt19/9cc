@@ -89,7 +89,7 @@ bool is_alpha_num(char c) {
 }
 
 char *is_reserved(char *p) {
-	char *keywords[] = {"return", "if", "else", "while"};
+	char *keywords[] = {"return", "if", "else", "while", "for"};
 
 	for (int i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
 		int len = strlen(keywords[i]);
