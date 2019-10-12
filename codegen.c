@@ -1,14 +1,29 @@
 #include "9cc.h"
 
-// nodeが変数を指していたら、その変数のアドレスを
-// 計算して、スタックにpush
-void gen_lval(Node *node) {
-    if (node->kind != ND_LVAR)
-        error("代入の左辺値が変数ではありません");
-    
-    printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", node->offset);
-    printf("    push rax\n");   // アドレスraxをpush
+// 変数分のアドレスをスタックにpushする
+void gen_lvar(Node *node) {
+    if (node->kind == ND_LVAR) {
+		printf("	lea rax, [rbp-%d]\n", node->lvar->offset);
+		printf("	push rax\n");
+		return;
+	}
+	error("not a value");
+}
+
+//popしたアドレスから参照できる値をpushする
+//先頭の値はアドレス扱いの値である
+void load() {
+	printf("	pop rax\n");
+	printf("	mov rax, [rax]\n");
+	printf("	push rax\n");
+}
+
+//先頭の値をその次の値（アドレス）に代入する
+void store() {
+	printf("	pop rdi\n");
+	printf("	pop rax\n");
+	printf("	mov [rax], rdi\n");
+	printf("	push rdi\n");
 }
 
 void gen(Node *node) {
@@ -17,18 +32,21 @@ void gen(Node *node) {
         printf("    push %d\n", node->val);
         return;
     case ND_LVAR:
-        gen_lval(node);
-        printf("    pop rax\n");        //raxはアドレス
-        printf("    mov rax, [rax]\n"); //raxは値となる
-        printf("    push rax\n");
+        gen_lvar(node);
+        load();
         return;
     case ND_ASSIGN:
-        gen_lval(node->lhs);            // 左辺のアドレスを得る
+        gen_lvar(node->lhs);
         gen(node->rhs);
-
-        printf("    pop rdi\n");
-        printf("    pop rax\n");
-        printf("    mov [rax], rdi\n");
+		store();
+		return;
+	case ND_RETURN:
+		gen(node->lhs);
+		printf("	pop rax\n");
+		printf("	mov rsp, rbp\n");
+		printf("	pop rbp\n");
+		printf("	ret\n");
+		return;
     }
 
     gen(node->lhs);
@@ -51,7 +69,6 @@ void gen(Node *node) {
 		printf("	cqo\n");
 		printf("	idiv rdi\n");
 		break;
-    /*
 	case ND_EQ:
 		printf("	cmp rax, rdi\n");
 		printf("	sete al\n");
@@ -72,8 +89,31 @@ void gen(Node *node) {
 		printf("	setle al\n");
 		printf("	movzb rax, al\n");
 		break;
-    */
 	}
 
 	printf("	push rax\n");
+}
+
+void codegen(Function *prog) {
+	//アセンブリの前半を出力
+	printf(".intel_syntax noprefix\n");
+	printf(".global main\n");
+	printf("main:\n");
+
+	//プロローグ
+    //変数26個分の領域を確保する
+    printf("    push rbp\n");
+    printf("    mov rbp, rsp\n");
+    printf("    sub rsp, %d\n", prog->stack_size);   // rsp <--スタックサイズ--> rbp
+
+	//先頭の式からコード生成
+    for (Node *node = prog->node; node; node = node->next) {
+		gen(node);
+    }
+
+	//エピローグ
+    //最後の式の結果がRAXに残っているので、それが返り値
+    printf("    mov rsp, rbp\n");
+	printf("	pop rbp\n");
+	printf("    ret\n");
 }

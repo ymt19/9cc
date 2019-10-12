@@ -103,6 +103,12 @@ Token *tokenize(){
 			continue;
 		}
 
+		if (startswith(p, "return") && !is_alpha_num(*(p + 6))) {
+			cur = new_token(TK_RESERVED, cur, p, 6);
+			p += 6;
+			continue;
+		}
+
         //2文字の記号
 		if (startswith(p, "==") || startswith(p, "!=") ||
 			startswith(p, "<=") || startswith(p, ">=")) {
